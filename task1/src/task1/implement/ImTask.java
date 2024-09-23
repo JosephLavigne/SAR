@@ -11,8 +11,7 @@ public class ImTask extends Task {
 
 	@Override
 	public Broker getBroker() {
-		// TODO Auto-generated method stub
-		return null;
+		return super.broker;
 	}
 
 }

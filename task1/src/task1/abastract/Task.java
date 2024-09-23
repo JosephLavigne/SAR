@@ -2,7 +2,7 @@ package task1.abastract;
 
 public abstract class Task extends Thread {
 	
-	Broker broker;
+	protected Broker broker;
 	Runnable runnable;
 	
 	public Task(Broker b, Runnable r) {
