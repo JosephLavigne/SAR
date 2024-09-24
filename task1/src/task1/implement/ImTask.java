@@ -11,7 +11,9 @@ public class ImTask extends Task {
 
 	@Override
 	public Broker getBroker() {
-		return super.broker;
+		Thread t = Thread.currentThread();
+		Task task = (Task) t;
+		return task.broker;
 	}
 
 }

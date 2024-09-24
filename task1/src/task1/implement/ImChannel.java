@@ -5,34 +5,45 @@ import task1.abastract.Channel;
 public class ImChannel extends Channel {
 	
 	boolean disconnect;
+	CircularBuffer in; // read
+	CircularBuffer out; // write
 	
-	public ImChannel() {
+	public ImChannel(RDV rdv,CircularBuffer read, CircularBuffer write) {
+		super(rdv);
 		this.disconnect = false;
+		this.in = read;
+		this.out = write;
 	}
 
 	@Override
 	public int read(byte[] bytes, int offset, int length) {
-		while(length > 0) {
-			if(this.disconnected()) {
-				//TODO read circular Buffer
+		int read = 0;
+		synchronized(in) {
+			while(read <= length || !in.empty()) {
+				if(!this.disconnected()) {
+					bytes[read] = in.pull();
+					read++;
+				}
 			}
 		}
-		return 0;
+		return read;
 	}
 
 	@Override
 	public int write(byte[] bytes, int offset, int length) {
-		while(length > 0) {
-			if(this.disconnected()) {
-				//TODO write circular Buffer
+		int write = 0;
+		while(length > 0 || !out.full()) {
+			if(!this.rdv.cc.disconnected() && !this.rdv.ca.disconnected()) {
+				out.push(bytes[write]);
+				write++;
 			}
 		}
-		return 0;
+		return write;
 	}
 
 	@Override
 	public void disconnect() {
-		// TODO Auto-generated method stub		
+		this.disconnect = true;	
 	}
 
 	@Override

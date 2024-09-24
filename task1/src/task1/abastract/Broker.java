@@ -1,11 +1,16 @@
 package task1.abastract;
 
+import java.util.HashMap;
+
+import task1.implement.RDV;
+
 public abstract class Broker {
-	String name;
+	public String name;
+	public HashMap<Integer, RDV> portRDV;
 	public Broker(String name) {
 		this.name = name;
 	}
 	public abstract Channel accept(int port);
-	public abstract Channel connect(String name, int port);
+	public abstract Channel connect(String name, int port) ;
 	
 }
