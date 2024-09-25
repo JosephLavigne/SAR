@@ -10,8 +10,8 @@ public class RDV { // RDV de deux thread (à utiliser seulement pour les RDV des
 	int nexpected; 
 	boolean attbc; // attente de bc true / attente de ba false
 	
-	Channel ca; // Channel broker accept
-	Channel cc; // Channel broker connect
+	ImChannel ca; // Channel broker accept
+	ImChannel cc; // Channel broker connect
 	
 	CircularBuffer c1; // ca write et cc read
 	CircularBuffer c2; // ca read et cc write
@@ -19,7 +19,7 @@ public class RDV { // RDV de deux thread (à utiliser seulement pour les RDV des
 	static int capacity = 50; // Paramètre settings
 	
 	public RDV(Broker bc, Broker ba) { 
-		this.nexpected = 1;
+		this.nexpected = 2;
 		this.ba = ba;
 		this.bc = bc;
 		if (bc != null) {
@@ -27,9 +27,59 @@ public class RDV { // RDV de deux thread (à utiliser seulement pour les RDV des
 		}
 	}
 	
+	public RDV() {
+		
+	}
+	
+	
+	private void _wait() {
+		while(ca==null || cc == null) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	synchronized Channel connect(Broker cb, int port) {
+		this.bc = cb;
+		cc = new ImChannel(bc, port);
+		if(ca != null) {
+			ca.connect(cc, bc.getname());
+			notify();
+		}
+		else {
+			_wait();
+		}
+		return cc;
+	}
+	
+	synchronized Channel accept(Broker ab, int port) {
+		this.ba = ab;
+		ca = new ImChannel(ba, port);
+		if(cc != null) {
+			ca.connect(cc, ba.getname());
+			notify();
+		}
+		else {
+			_wait();
+		}
+		return ca;
+	}
+
+	public Channel accept(ImBroker ab, int port) {
+		return accept((Broker)ab, port);
+	}
+	
+	/*
+	public RDV() {
+		this.nexpected = 2;
+	}
+	
 	public synchronized void come() {
 		this.nexpected--;
-		while(nexpected>0) {
+		while(nexpected-1>0) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -63,5 +113,6 @@ public class RDV { // RDV de deux thread (à utiliser seulement pour les RDV des
 		cc = new ImChannel(this, c1, c2);
 		
 	}
+	*/
 
 }

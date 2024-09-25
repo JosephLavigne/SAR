@@ -6,4 +6,5 @@
  *
  */
 module task1 {
+	requires java.desktop;
 }

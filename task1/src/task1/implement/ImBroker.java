@@ -6,39 +6,40 @@ import task1.abastract.Broker;
 import task1.abastract.Channel;
 
 public class ImBroker extends Broker{
+	BrokerManager bm;
 	HashMap<Integer, RDV> portRDV;
 	
 	public ImBroker(String name) {
 		super(name);
 		portRDV = new HashMap<Integer, RDV>(); // Integer : port
+		bm = BrokerManager.getSelf();
+		bm.addBroker(this); // TODO
 	}
 	
 	@Override
-	public Channel accept(int port) {
-		RDV rdv = this.portRDV.get(port);
-		if(rdv != null){
-			try {
-				return rdv.comeaccept();
-			} catch (Exception e) {
-				e.printStackTrace();
+	public Channel accept(int port) { //TODO
+		RDV rdv = null;
+		synchronized(portRDV) {
+			rdv = this.portRDV.get(port);
+			if(rdv != null) {
+				throw new IllegalStateException("Impossible d'accepter sur Le port : "+port);
 			}
+			rdv = new RDV();
+			portRDV.put(port, rdv);
+			portRDV.notifyAll();
 		}
-		else {
-			rdv = new RDV(this, null);
-			this.portRDV.put(port, rdv);
-			try {
-				return rdv.comeaccept();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		Channel ch = null;
+		try {
+			ch = rdv.accept(this, port);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		System.out.println("Impossible d'accpet sur Le port : "+port+" du broker "+this.name);
-		return null;
+		return ch;
 	}
 	
 	@Override
 	public Channel connect(String name, int port){
-		Broker b = BrokerManager.getBroker(name); // pourrait-etre mis en une ligne mais c'est plus clair
+		ImBroker b = (ImBroker) bm.getBroker(name);
 		if(b == null) {
 			try {
 				throw new Exception("Illegal State : Broker doesn't exist");
@@ -49,36 +50,33 @@ public class ImBroker extends Broker{
 		return this.connect(b, port);
 	}
 	
-	private Channel connect(Broker b, int port) { // EN COURS
-		synchronized(b) {
-			if(this.portRDV.containsKey(port)) { // le broker courrant ne doit pas avoir le port demandé déjà utilisé
+	private Channel connect(Broker b, int port) {
+		RDV rdv = null;
+		synchronized(portRDV) {
+			rdv = portRDV.get(port);
+			while(rdv == null) {
 				try {
-					throw new Exception("Le port : "+port+" déjà utilisé pour le broker "+ this.name); // ERREUR
-				} catch (Exception e) {
-					e.printStackTrace();
+					portRDV.wait();
+				} catch (InterruptedException ex) {
+					//nothing
 				}
-				return null;
+				rdv = portRDV.get(port);
 			}
-			else if(b.portRDV.containsKey(port)){
-				RDV rdv = b.portRDV.get(port);
-				if(rdv.nexpected == 0 || rdv.attbc == false) {
-					System.out.println("le Broker "+b.name+" n'est pas en attente de connexion sur le port : "+port);
-				}
-				System.out.println("Le port : "+port+" déjà utilisé pour le broker "+ b.name); // Il y a peut-etre un accept en attente
-				return null;
-			}
-			else {
-				RDV rdv = new RDV(this, b);
-				b.portRDV.put(port, rdv);
-				try {
-					return rdv.comeconnect();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}	
-				}
-			return null;
-			}
+			portRDV.remove(port);
 		}
+		Channel ch = null;
+		try {
+			ch = rdv.connect(this, port);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ch;
 	}
+	
+	
+	public String getname() {
+		return this.name;
+	}
+}
 		
 	
