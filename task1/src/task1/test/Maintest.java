@@ -4,7 +4,9 @@ package task1.test;
 import task1.abastract.Broker;
 import task1.abastract.Channel;
 import task1.abastract.Task;
+import task1.implement.DisconnectedException;
 import task1.implement.ImBroker;
+import task1.implement.ImChannel;
 import task1.implement.ImTask;
 
 public class Maintest {
@@ -35,17 +37,18 @@ public class Maintest {
 	
 	
 	static boolean Test1() { // simple connection/deconnection d'un client vers le serveur
-		Broker serv = new ImBroker("Toto");
-		Channel client = serv.connect("Client", 1000);
+		ImBroker serv = new ImBroker("Toto");
+		ImBroker client = new ImBroker("Tata");
+		ImChannel c1 = (ImChannel) client.connect("Toto", 1000);
 		
-		if(client.disconnected()) {
+		if(c1.disconnected()) {
 			System.out.println("Test n°1 échec");
 			return false;
 		}
 		
-		client.disconnect();
+		c1.disconnect();
 		
-		if(client.disconnected()) {
+		if(c1.disconnected()) {
 			System.out.println("Test n°1 validé");
 			return true;
 		}
@@ -64,7 +67,12 @@ public class Maintest {
 	    	Wbuffer[i] = (byte) (i + 1);
 	    }
 	    
-	    int nb_Bytes = client.read(Wbuffer, 0, 20);
+	    int nb_Bytes = -1;
+		try {
+			nb_Bytes = client.read(Wbuffer, 0, 20);
+		} catch (DisconnectedException e) {
+			e.printStackTrace();
+		}
 	    if (nb_Bytes != 20) {
 	    	System.out.println("Test n°2 échec car seulement une lecture de " + nb_Bytes);
 	    	return false;

@@ -38,7 +38,11 @@ public class ImChannel extends Channel {
 	@Override
 	public int read(byte[] bytes, int offset, int length) {
 		if(disconnected()) {
-			throw new DisconnectedException();
+			try {
+				throw new DisconnectedException();
+			} catch (DisconnectedException ex) {
+				//nothing
+			}
 		}
 		int nbytes = 0;
 		try {
@@ -75,7 +79,11 @@ public class ImChannel extends Channel {
 					out.notify();
 				}
 			}
-			throw ex;
+			try {
+				throw ex;
+			} catch (DisconnectedException e) {
+				e.printStackTrace();
+			} 
 		}
 		return nbytes;
 	}
@@ -84,7 +92,11 @@ public class ImChannel extends Channel {
 	@Override
 	public int write(byte[] bytes, int offset, int length){
 		if(disconnected()) {
-			throw new DisconnectedException();
+			try {
+				throw new DisconnectedException();
+			} catch (DisconnectedException ex) {
+				//nothing
+			}
 		}
 		int nbytes = 0;
 		while(nbytes == 0) {
@@ -92,7 +104,11 @@ public class ImChannel extends Channel {
 				synchronized(out) {
 					while(out.full()) {
 						if(disconnect) {
-							throw new DisconnectedException();
+							try {
+								throw new DisconnectedException();
+							} catch (DisconnectedException ex) {
+								//nothing
+							}
 						}
 						if(dangling) {
 							return length;

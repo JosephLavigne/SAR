@@ -42,8 +42,8 @@ public class RDV { // RDV de deux thread (à utiliser seulement pour les RDV des
 		}
 	}
 	
-	synchronized Channel connect(Broker cb, int port) {
-		this.bc = cb;
+	synchronized Channel connect(Broker bc, int port) {
+		this.bc = bc;
 		cc = new ImChannel(bc, port);
 		if(ca != null) {
 			ca.connect(cc, bc.getname());
@@ -55,8 +55,8 @@ public class RDV { // RDV de deux thread (à utiliser seulement pour les RDV des
 		return cc;
 	}
 	
-	synchronized Channel accept(Broker ab, int port) {
-		this.ba = ab;
+	synchronized Channel accept(Broker ba, int port) {
+		this.ba = ba;
 		ca = new ImChannel(ba, port);
 		if(cc != null) {
 			ca.connect(cc, ba.getname());

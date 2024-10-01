@@ -13,11 +13,11 @@ public class ImBroker extends Broker{
 		super(name);
 		portRDV = new HashMap<Integer, RDV>(); // Integer : port
 		bm = BrokerManager.getSelf();
-		bm.addBroker(this); // TODO
+		bm.addBroker(this);
 	}
 	
 	@Override
-	public Channel accept(int port) { //TODO
+	public Channel accept(int port)  {
 		RDV rdv = null;
 		synchronized(portRDV) {
 			rdv = this.portRDV.get(port);
@@ -66,7 +66,7 @@ public class ImBroker extends Broker{
 		}
 		Channel ch = null;
 		try {
-			ch = rdv.connect(this, port);
+			ch = rdv.connect(b, port);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

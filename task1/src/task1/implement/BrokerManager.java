@@ -22,12 +22,15 @@ public class BrokerManager {
 	}
 	
 	synchronized void addBroker(Broker b) {
+		if(b == null) {
+			throw new IllegalPathStateException("Le broker donné ne peut pas être null");
+		}
 		String name = b.name;
 		Broker bro = self.brokers.get(name); // verifier que le broker n'est pad déjà dans la HashMap
 		if(bro != null) {
-			throw new IllegalPathStateException("Le Broker ne peut pas être null");
+			throw new IllegalPathStateException("Le Broker est déjà défini dans l'environnement");
 		}
-		self.brokers.put(name, bro);
+		self.brokers.put(name, b);
 	}
 	
 	synchronized Broker getBroker(String name) {
