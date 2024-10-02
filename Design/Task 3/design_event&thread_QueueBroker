@@ -1,4 +1,8 @@
-à faire Design_QueueBroker
+Contrainte : 
+
+- Utiliser les channels avec appel bloquant
+- Melange entre thread et event
+- Utilisation d'une seule event pump
 
 
 //TODO
