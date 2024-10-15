@@ -1,9 +1,9 @@
 package task3.abastract;
 
 public abstract class Message {
-	byte[] bytes;
-	int offset;
-	int length;
+	protected byte[] bytes;
+	protected int offset;
+	protected int length;
 	
 	public Message(byte[] bytes, int offset, int length) {
 		this.bytes = bytes;
@@ -11,6 +11,14 @@ public abstract class Message {
 		this.length = length;
 	}
 	
-	public abstract void sent();
-
+	public Message(byte[] bytes) {
+		this.bytes = bytes;
+		this.offset = 0;
+		this.length = bytes.length;
+	}
+	
+	public abstract int getLength();
+	public abstract int getOffset();
+	public abstract byte[] getBytes();
+	
 }

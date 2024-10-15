@@ -1,50 +1,137 @@
 package task3.implement;
 
+import java.util.LinkedList;
+
+import task1.abastract.Channel;
+import task1.implement.DisconnectedException;
+import task3.abastract.Message;
 import task3.abastract.MessageQueue;
+import task3.abastract.NewTask;
 
 public class EvMessageQueue extends MessageQueue {
+	
+	private MessageListener l;
+	private LinkedList<Message> attmessage; // Message en attente d'envoie
+	private Thread readthread;
+	private Thread writethread;
 
-	@Override
-	public void setListener(Listener l) {
-		// TODO Auto-generated method stub
+	public EvMessageQueue(Channel channel) {
+		super(channel);
+		this.l = null;
+		this.attmessage = new LinkedList<Message>();
+		this.readthread = readthreadcreation();
+		this.writethread = writethreadcreation();
+	}
+	
+	private Thread readthreadcreation() {
+		Thread t = new Thread(()-> {
+			while(!this.channel.disconnected()) {
+				byte[] length = new byte[4];
+				try {
+					//Recuperation de la taille du message
+					int reponse = 0;
+					while(reponse < 4) {
+						reponse += this.channel.read(length, reponse, 4-reponse);
+					}
+					// CONVERSION BYTES en INT
+					int len = (length[0] << 24) | ((length[1] & 0xFF) << 16) | ((length[2] & 0xFF) << 8) | ((length[3] & 0xFF));
+					
+					//Lecture du Message
+					int lecture = 0;
+					byte[] message = new byte[len];
+					while(lecture < len) {
+						lecture += this.channel.read(message, lecture, len - lecture);
+					}
+					
+					new ImNewTask().post(() -> l.receive((Message) new ImMessage(message)));
+				}catch (DisconnectedException e) {
+						break;
+					}
+			}
+		});
+		t.start();
+		return t;
+		
+	}
+	
+	
+	private Thread writethreadcreation() {
+		Thread t = new Thread(()-> {
+			while(!this.channel.disconnected()) {
+				try {
+					Message msg = null;
+					synchronized(attmessage) {
+						if(attmessage.isEmpty() == false) {
+							msg = attmessage.poll();
+						}
+					}
+					
+					int length = msg.getLength();
+					//envoie du Message
+					byte[] len = new byte[4]; // taille d'un int
+					// CONVERSION INT EN BYTE
+					len[0] = (byte) (length >> 24);
+					len[1] = (byte) (length >> 16);
+					len[2] = (byte) (length >> 8);
+					len[3] = (byte) (length);
+					
+					byte[] message = new byte[length + 4];
+					message[0] = len[0];
+					message[1] = len[1];
+					message[2] = len[2];
+					message[3] = len[3];
+					
+					System.arraycopy(msg.getBytes(), msg.getOffset(), message, 4, length);
+					
+					int ecriture = 0;
+					while(ecriture != length) {
+						ecriture += this.channel.write(message, ecriture, length - ecriture);
+					}
+					
+					new ImNewTask().post(()-> l.sent((Message) new ImMessage(message)));
+				} catch (DisconnectedException e) {
+					break;
+				}
+			}
+			
+		});
+		t.start();
+		return t;
 		
 	}
 
+	@Override
+	public void setListener(MessageListener l) {
+		this.l = l ;
+		
+	}
+
+	@Override
+	public void send(Message msg) {
+		synchronized(this.attmessage) {
+			this.attmessage.add(msg);
+		}
+	}
+
+	@Override
+	public void send(byte[] bytes) {
+		send((Message) new ImMessage(bytes));
+	}
+	
 	@Override
 	public void send(byte[] bytes, int offset, int length) {
-		// TODO Auto-generated method stub
+		send((Message) new ImMessage(bytes, offset, length));
 		
-	}
-
-	@Override
-	public byte[] receive() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-		
+		this.channel.disconnect();
 	}
 
 	@Override
 	public boolean closed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void send(byte[] msg) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public void send(MessageQueue queue, String[] messages) {
-		for (int i=0;i<messages.length;i++) {
-			byte[] msg = messages[i].getBytes();
-			queue.send(msg);
-		}
+		return this.channel.disconnected();
 	}
 
 	

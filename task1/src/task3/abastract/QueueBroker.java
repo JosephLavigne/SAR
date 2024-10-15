@@ -1,18 +1,20 @@
 package task3.abastract;
 
-abstract class QueueBroker {
+import task2.implement.ImMessageQueue;
+
+public abstract class QueueBroker {
 	String name;
-	QueueBroker(String name) {
+	protected QueueBroker(String name) {
 		this.name = name;
 	}
-	interface AcceptListener {
-			void accepted(MessageQueue queue);
+	public interface AcceptListener {
+			public void accepted(ImMessageQueue q);
 	}
-	abstract boolean bind(int port, AcceptListener listener);
-	abstract boolean unbind(int port);
-	interface ConnectListener {
-		void connected(MessageQueue queue);
-		void refused();
+	public abstract boolean bind(int port, AcceptListener listener);
+	public abstract boolean unbind(int port);
+	public interface ConnectListener {
+		public void connected(ImMessageQueue q);
+		public void refused();
 	}
-	abstract boolean connect(String name, int port, ConnectListener listener);
+	public abstract boolean connect(String name, int port, ConnectListener listener);
 }

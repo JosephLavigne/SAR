@@ -33,7 +33,7 @@ public class BrokerManager {
 		self.brokers.put(name, b);
 	}
 	
-	synchronized Broker getBroker(String name) {
+	public synchronized Broker getBroker(String name) {
 		return self.brokers.get(name);
 	}
 	
